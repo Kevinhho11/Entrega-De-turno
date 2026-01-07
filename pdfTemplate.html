@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 4px solid #2563eb;
+            padding-bottom: 25px;
+            margin-bottom: 35px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb, #3b82f6, #60a5fa);
+        }
+        
+        .header h1 {
+            color: #1e40af;
+            font-size: 28px;
+            margin: 0 0 10px 0;
+            font-weight: 700;
+        }
+        
+        .header p {
+            color: #64748b;
+            margin: 5px 0 0 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border-left: 5px solid #2563eb;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease;
+        }
+        
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .section h2 {
+            color: #1e40af;
+            font-size: 20px;
+            margin: 0 0 15px 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .info-item {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .info-item:hover {
+            background: linear-gradient(135deg, #e2e8f0, #f1f5f9);
+            transform: translateX(5px);
+        }
+        
+        .info-label {
+            font-weight: 700;
+            color: #2563eb;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-size: 15px;
+            margin-top: 8px;
+            color: #374151;
+            font-weight: 500;
+        }
+        
+        .vehiculos-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 13px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .vehiculos-table th,
+        .vehiculos-table td {
+            border: 1px solid #e2e8f0;
+            padding: 12px 10px;
+            text-align: left;
+        }
+        
+        .vehiculos-table th {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 12px;
+        }
+        
+        .vehiculos-table tr:nth-child(even) {
+            background: #f8fafc;
+        }
+        
+        .vehiculos-table tr:hover {
+            background: #f1f5f9;
+        }
+        
+        .estado-confirmado {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            display: inline-block;
+            min-width: 90px;
+        }
+        
+        .estado-pendiente {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            display: inline-block;
+            min-width: 90px;
+        }
+        
+        .estado-cancelado {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            display: inline-block;
+            min-width: 90px;
+        }
+        
+        .estado-terminado {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            display: inline-block;
+            min-width: 90px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            padding: 20px 15px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #2563eb;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .puntos-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .puntos-list li {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            margin: 8px 0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .puntos-list li:hover {
+            transform: translateX(5px);
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+        }
+        
+        .puntos-list li:before {
+            content: "✓ ";
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .observaciones-text {
+            background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #d1fae5;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #065f46;
+        }
+        
+        .facturas-text {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #fcd34d;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #92400e;
+        }
+        
+        .novedades-text {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #fca5a5;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #991b1b;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 25px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-primary {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 15px;
+                background: white;
+            }
+            
+            .section {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #e2e8f0;
+            }
+            
+            .header {
+                box-shadow: none;
+                border: 1px solid #e2e8f0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚚 ENTREGA DE TURNO - REPORTE LOGÍSTICO</h1>
+        <p>Sistema de Gestión Logística Empresarial</p>
+        <div style="margin-top: 15px; display: flex; justify-content: center; gap: 20px;">
+            <span class="badge badge-primary">Fecha: <?= formatDate(data.fecha) ?></span>
+            <span class="badge badge-success">Turno: <?= (data.turno || 'No especificado').toUpperCase() ?></span>
+            <span class="badge badge-warning">Facturador: <?= data.facturador || 'No especificado' ?></span>
+        </div>
+    </div>
+    
+    <!-- Sección de Vehículos Cargados -->
+    <div class="section">
+        <h2>🚛 Vehículos Cargados Durante el Turno</h2>
+        <table class="vehiculos-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Destino</th>
+                    <th>Transportadora</th>
+                    <th>Placa</th>
+                    <th>Verificador</th>
+                    <th>Separador</th>
+                    <th>Estatus</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?= buildVehiculosCargadosTable(data.vehiculosCargados) ?>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section">
+        <h2>📋 Información Básica</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Facturador</div>
+                <div class="info-value"><?= data.facturador || 'No especificado' ?></div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Turno</div>
+                <div class="info-value"><?= (data.turno || 'No especificado').toUpperCase() ?></div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Fecha</div>
+                <div class="info-value"><?= formatDate(data.fecha) ?></div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Generado</div>
+                <div class="info-value"><?= new Date().toLocaleString('es-ES') ?></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>📝 Observaciones del Turno</h2>
+        <div class="observaciones-text">
+            <?= data.observaciones || 'Sin observaciones registradas' ?>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>📊 Proyección de Vehículos del Día Siguiente</h2>
+        
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value"><?= vehiculosStats.total ?></div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value"><?= vehiculosStats.confirmados ?></div>
+                <div class="stat-label">Confirmados</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value"><?= vehiculosStats.pendientes ?></div>
+                <div class="stat-label">Pendientes</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value"><?= vehiculosStats.cancelados ?></div>
+                <div class="stat-label">Cancelados</div>
+            </div>
+        </div>
+        
+        <table class="vehiculos-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Destino</th>
+                    <th>Transportadora</th>
+                    <th>Placa</th>
+                    <th>Hora Citada</th>
+                    <th>Estado</th>
+                    <th>Consecutivo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?= buildVehiculosTable(data.vehiculos) ?>
+            </tbody>
+        </table>
+    </div>
+    
+    <? if (data.facturasPendientes && data.facturasPendientes.trim() !== '') { ?>
+    <div class="section">
+        <h2>💰 Facturas Fletes Pendientes y/o Novedades</h2>
+        <div class="facturas-text">
+            <?= data.facturasPendientes ?>
+        </div>
+    </div>
+    <? } ?>
+    
+    <? if (data.novedadesMateriales && data.novedadesMateriales.trim() !== '') { ?>
+    <div class="section">
+        <h2>📦 Novedades de Materiales</h2>
+        <div class="novedades-text">
+            <?= data.novedadesMateriales ?>
+        </div>
+    </div>
+    <? } ?>
+    
+    <div class="section">
+        <h2>✅ Puntos Completados en el Turno</h2>
+        <div style="margin-bottom: 15px;">
+            <span class="badge badge-success">Total de actividades completadas: <?= (data.puntosConsiderar || []).length ?></span>
+        </div>
+        <ul class="puntos-list">
+            <?= buildPuntosCompletados(data.puntosConsiderar) ?>
+        </ul>
+    </div>
+    
+    <div class="footer">
+        <p>📄 Este reporte fue generado automáticamente por el Sistema de Entrega de Turno</p>
+        <p>© 2025 Sistema de Gestión Logística Empresarial</p>
+    </div>
+</body>
+</html>

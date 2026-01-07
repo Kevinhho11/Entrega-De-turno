@@ -1,0 +1,3171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Entrega de Turno</title>
+
+</head>
+<body>
+
+   <style>
+      /* Cajas de texto personalizadas para secciones tipo PDF y web */
+.observaciones-text {
+  background: #f6fef9; /* Suave verde */
+  padding: 18px 20px;
+  border-radius: 7px;
+  border-left: 6px solid #10b981; /* Verde Comarrico */
+  border: 1px solid #e2e8f0;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #155c3b;
+  margin-bottom: 5px;
+}
+.facturas-text {
+  background: #fffaf5; /* Suave naranja */
+  padding: 18px 20px;
+  border-radius: 7px;
+  border-left: 6px solid #f59e0b; /* Naranja Comarrico */
+  border: 1px solid #fbe7c6;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #7c4a03;
+  margin-bottom: 5px;
+}
+.novedades-text {
+  background: #fff6f6; /* Suave rojo */
+  padding: 18px 20px;
+  border-radius: 7px;
+  border-left: 6px solid #ef4444; /* Rojo Comarrico */
+  border: 1px solid #f9d2d2;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #a12a2a;
+  margin-bottom: 5px;
+}
+
+    /* Variables CSS */
+:root {
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --accent: #f8fafc;
+  --accent-foreground: #0f172a;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --border: #e2e8f0;
+  --input: #ffffff;
+  --ring: #2563eb;
+  --radius: 0.5rem;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+}
+
+/* Reset y base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  color: var(--foreground);
+  background-color: var(--background);
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Header */
+.header {
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--primary);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-foreground);
+  background-color: red;
+}
+
+.header-info h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.header-info p {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--secondary);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  color: var(--secondary-foreground);
+}
+
+.status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--success);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* Navigation */
+.navigation {
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  transition: all 0.2s;
+}
+
+.nav-tab:hover {
+  color: var(--foreground);
+  background: var(--accent);
+}
+
+.nav-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: var(--background);
+}
+
+/* Main Content */
+.main-content {
+  padding: 2rem 0;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Cards */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--card-foreground);
+}
+
+.card-title svg {
+  color: var(--primary);
+}
+
+.card-description {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.card-content {
+  padding: 1.5rem;
+}
+
+.info-card {
+  border-color: rgba(37, 99, 235, 0.2);
+  background: rgba(37, 99, 235, 0.05);
+}
+
+/* Forms */
+.form-container {
+  max-width: none;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--foreground);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  background: var(--input);
+  color: var(--foreground);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+.btn-primary:hover {
+  background: rgba(37, 99, 235, 0.9);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  border-color: var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--accent);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+.btn-outline:hover {
+  background: var(--accent);
+}
+
+.btn-danger {
+  background: var(--error);
+  color: white;
+  border-color: var(--error);
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.9);
+}
+
+/* Tables */
+.table-container {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table th {
+  background: var(--muted);
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.data-table tr:hover {
+  background: var(--accent);
+}
+
+.data-table input,
+.data-table select {
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 0.5);
+  font-size: 0.75rem;
+  width: 100%;
+  min-width: 100px;
+}
+
+/* Checkboxes */
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0.75rem;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.checkbox-item:hover {
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.checkbox-item input[type="checkbox"] {
+  margin-top: 0.125rem;
+  cursor: pointer;
+}
+
+.checkbox-item label {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  cursor: pointer;
+  flex: 1;
+}
+
+/* Summary Stats */
+.summary-stats {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--accent);
+  border-radius: var(--radius);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* Badges */
+.badges-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  border-radius: calc(var(--radius) * 0.5);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.badge-success {
+  background: var(--success);
+  color: white;
+}
+
+.badge-warning {
+  background: var(--warning);
+  color: white;
+}
+
+.badge-error {
+  background: var(--error);
+  color: white;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+@media (min-width: 640px) {
+  .form-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+  }
+}
+
+/* Progress */
+.progress-container {
+  margin-top: 1rem;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  margin-bottom: 0.5rem;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 0.5rem;
+  background: var(--muted);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: var(--radius);
+  transition: width 0.5s ease;
+  width: 0%;
+}
+
+.progress-text {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin-top: 0.5rem;
+}
+
+/* Info Box */
+.info-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  margin-top: 1rem;
+}
+
+.info-box svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* Puntos Summary */
+.puntos-summary {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(37, 99, 235, 0.05);
+  border-radius: var(--radius);
+}
+
+.summary-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--foreground);
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  min-width: 200px;
+}
+
+/* Footer */
+.footer {
+  border-top: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.6);
+  margin-top: 4rem;
+}
+
+.footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 0;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toast {
+  padding: 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 300px;
+  animation: slideInRight 0.3s ease-out;
+}
+
+.toast.success {
+  border-left: 4px solid var(--success);
+}
+
+.toast.error {
+  border-left: 4px solid var(--error);
+}
+
+.toast-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.toast-description {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slide-up {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-scale-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 0.75rem;
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input {
+    min-width: auto;
+  }
+}
+
+/* Estados de vehículos */
+.estado-confirmado {
+  background: var(--success);
+  color: white;
+}
+
+.estado-pendiente {
+  background: var(--warning);
+  color: white;
+}
+
+.estado-cancelado {
+  background: var(--error);
+  color: white;
+}
+
+/* Loading spinner */
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+/* ========== ESTILOS MEJORADOS PARA TARJETAS DE REGISTROS ========== */
+.registro-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border-left: 5px solid var(--primary);
+}
+
+.registro-card:hover {
+  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.15);
+  transform: translateY(-4px);
+}
+
+.registro-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--muted);
+}
+
+.registro-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.registro-subtitle {
+  font-size: 0.95rem;
+  color: var(--muted-foreground);
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.registro-meta {
+  text-align: right;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.registro-fecha {
+  font-weight: 600;
+  color: var(--foreground);
+  font-size: 0.9rem;
+}
+
+.registro-hora {
+  font-size: 0.8rem;
+  color: var(--primary);
+  background: rgba(37, 99, 235, 0.1);
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
+
+.registro-body {
+  margin-bottom: 1.5rem;
+}
+
+.registro-campo {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--muted), #f8fafc);
+  border-radius: 10px;
+  border-left: 4px solid var(--primary);
+  transition: all 0.3s ease;
+}
+
+.registro-campo:hover {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  transform: translateX(5px);
+}
+
+.registro-campo b {
+  color: var(--foreground);
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+}
+
+.registro-campo span {
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  display: block;
+}
+
+/* Tabla de vehículos mejorada */
+.vehiculos-table-mini {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-top: 1.25rem;
+  background: var(--background);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.vehiculos-table-mini thead {
+  background: linear-gradient(135deg, var(--primary), #3b82f6);
+}
+
+.vehiculos-table-mini th {
+  padding: 1rem 0.75rem;
+  text-align: left;
+  font-weight: 700;
+  color: white;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vehiculos-table-mini td {
+  padding: 0.85rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.vehiculos-table-mini tr:last-child td {
+  border-bottom: none;
+}
+
+.vehiculos-table-mini tr:hover {
+  background: var(--accent);
+  transform: scale(1.01);
+  transition: all 0.2s ease;
+}
+
+/* Badges de estado premium */
+.estado-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: white;
+  text-align: center;
+  min-width: 100px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.estado-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.estado-confirmado {
+  background: linear-gradient(135deg, var(--success), #059669);
+}
+
+.estado-pendiente {
+  background: linear-gradient(135deg, var(--warning), #d97706);
+}
+
+.estado-cancelado {
+  background: linear-gradient(135deg, var(--error), #dc2626);
+}
+
+.estado-otro {
+  background: linear-gradient(135deg, #64748b, #475569);
+}
+
+/* Contenedor grid mejorado */
+.registros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* ========== ESTILOS PREMIUM PARA TARJETAS DE REGISTROS ========== */
+.registros-container {
+  padding: 2rem 0;
+}
+
+.registros-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.registros-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary), #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+}
+
+.registros-subtitle {
+  font-size: 1.1rem;
+  color: var(--muted-foreground);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.registros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.registro-card {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 8px 40px rgba(37, 99, 235, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+.registro-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), #7c3aed, var(--success));
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.registro-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.12),
+    0 15px 60px rgba(37, 99, 235, 0.15);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+@keyframes shimmer {
+  0%, 100% { background-position: -200% 0; }
+  50% { background-position: 200% 0; }
+}
+
+/* Header mejorado */
+.registro-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid rgba(37, 99, 235, 0.1);
+  position: relative;
+}
+
+.registro-header-content {
+  flex: 1;
+}
+
+.registro-title-main {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.3;
+}
+
+.registro-subtitle {
+  font-size: 1rem;
+  color: var(--primary);
+  font-weight: 600;
+  background: rgba(37, 99, 235, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.registro-meta {
+  text-align: right;
+  min-width: 120px;
+}
+
+.registro-fecha {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 0.5rem;
+}
+
+.registro-hora {
+  font-size: 0.85rem;
+  color: var(--primary);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(124, 58, 237, 0.1));
+  padding: 0.5rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Campos de información organizados */
+.registro-body {
+  margin-bottom: 2rem;
+}
+
+.registro-campo {
+  margin-bottom: 1rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.8), rgba(241, 245, 249, 0.6));
+  border-radius: 14px;
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.registro-campo::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--primary), #7c3aed);
+  border-radius: 4px 0 0 4px;
+}
+
+.registro-campo:hover {
+  transform: translateX(8px);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.8));
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.1);
+}
+
+.registro-campo b {
+  color: var(--primary);
+  display: block;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.registro-campo span {
+  color: var(--muted-foreground);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  display: block;
+}
+
+/* Tabla de vehículos - COMPLETAMENTE REDISEÑADA */
+.vehiculos-section {
+  margin-top: 2rem;
+}
+
+.vehiculos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(124, 58, 237, 0.05));
+  border-radius: 14px;
+  border: 1px solid rgba(37, 99, 235, 0.1);
+}
+
+.vehiculos-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+}
+
+.vehiculos-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.vehiculo-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.vehiculo-stat.confirmados { color: var(--success); }
+.vehiculo-stat.pendientes { color: var(--warning); }
+.vehiculo-stat.cancelados { color: var(--error); }
+
+.vehiculos-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border-radius: 14px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+}
+
+.vehiculos-table-mini {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  min-width: 600px;
+}
+
+.vehiculos-table-mini thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.vehiculos-table-mini thead tr {
+  background: linear-gradient(135deg, var(--primary), #7c3aed);
+}
+
+.vehiculos-table-mini th {
+  padding: 1.25rem 1rem;
+  text-align: left;
+  font-weight: 700;
+  color: white;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+}
+
+.vehiculos-table-mini th::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 60%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.vehiculos-table-mini th:last-child::after {
+  display: none;
+}
+
+.vehiculos-table-mini td {
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  color: var(--foreground);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.vehiculos-table-mini tr:last-child td {
+  border-bottom: none;
+}
+
+.vehiculos-table-mini tbody tr {
+  transition: all 0.3s ease;
+}
+
+.vehiculos-table-mini tbody tr:hover {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(124, 58, 237, 0.03));
+  transform: scale(1.01);
+}
+
+.vehiculos-table-mini tbody tr:nth-child(even) {
+  background: rgba(248, 250, 252, 0.5);
+}
+
+.vehiculos-table-mini tbody tr:nth-child(even):hover {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(124, 58, 237, 0.05));
+}
+
+/* Badges de estado premium */
+.estado-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.2rem;
+  border-radius: 25px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: white;
+  min-width: 110px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.estado-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.estado-badge:hover::before {
+  left: 100%;
+}
+
+.estado-badge:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.estado-confirmado {
+  background: linear-gradient(135deg, var(--success), #059669);
+}
+
+.estado-pendiente {
+  background: linear-gradient(135deg, var(--warning), #d97706);
+}
+
+.estado-cancelado {
+  background: linear-gradient(135deg, var(--error), #dc2626);
+}
+
+.estado-otro {
+  background: linear-gradient(135deg, #64748b, #475569);
+}
+
+/* Estados vacíos elegantes */
+.registro-vacio {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--muted-foreground);
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.8), rgba(241, 245, 249, 0.6));
+  border-radius: 20px;
+  border: 2px dashed rgba(37, 99, 235, 0.3);
+  grid-column: 1 / -1;
+  backdrop-filter: blur(10px);
+}
+
+.registro-vacio .icono {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.5;
+}
+
+.registro-vacio h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--foreground);
+  font-weight: 700;
+}
+
+.registro-vacio p {
+  font-size: 1rem;
+  opacity: 0.8;
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Scrollbar personalizado */
+.vehiculos-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.vehiculos-container::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.5);
+  border-radius: 4px;
+}
+
+.vehiculos-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--primary), #7c3aed);
+  border-radius: 4px;
+}
+
+.vehiculos-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #1d4ed8, #6d28d9);
+}
+
+/* Responsive mejorado */
+@media (max-width: 768px) {
+  .registros-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .registro-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .registro-meta {
+    text-align: center;
+  }
+  
+  .vehiculos-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .vehiculos-stats {
+    justify-content: center;
+  }
+  
+  .vehiculos-container {
+    max-height: 300px;
+  }
+  
+  .registro-card {
+    padding: 1.5rem;
+    margin: 0 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .registros-title {
+    font-size: 2rem;
+  }
+  
+  .vehiculos-table-mini {
+    font-size: 0.75rem;
+    min-width: 500px;
+  }
+  
+  .vehiculos-table-mini th,
+  .vehiculos-table-mini td {
+    padding: 1rem 0.75rem;
+  }
+  
+  .estado-badge {
+    min-width: 90px;
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* Control de visibilidad para la sección de registros */
+#nueva-seccion-registros {
+  transition: all 0.3s ease;
+}
+
+#nueva-seccion-registros.hidden {
+  display: none !important;
+}
+
+
+      </style>
+
+      <script>
+      // --- NUEVA LÓGICA DE REGISTROS ---
+      // --- NUEVA LÓGICA DE REGISTROS ---
+      // --- LISTAS DE DATOS ---
+
+      // --- FUNCIONES REALES CON GOOGLE APPS SCRIPT ---
+      function fetchRegistros() {
+        return new Promise((resolve, reject) => {
+          if (window.google && google.script && google.script.run) {
+            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getRegistros();
+          } else {
+            reject('No se puede acceder a google.script.run');
+          }
+        });
+      }
+
+      function fetchVehiculos() {
+        return new Promise((resolve, reject) => {
+          if (window.google && google.script && google.script.run) {
+            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getVehiculosRegistros();
+          } else {
+            reject('No se puede acceder a google.script.run');
+          }
+        });
+      }
+
+      // --- Renderizado de tarjetas ---
+      function renderRegistros(registrosRaw) {
+        const cont = document.getElementById('registros-cards-container');
+        cont.innerHTML = '';
+        // Soportar respuesta {success, data}
+        let registros = Array.isArray(registrosRaw) ? registrosRaw : (registrosRaw && Array.isArray(registrosRaw.data) ? registrosRaw.data : []);
+        if (!registros || registros.length === 0) {
+          cont.innerHTML = '<div style="color:#888;">No hay registros disponibles.</div>';
+          return;
+        }
+        registros.forEach(reg => {
+          cont.appendChild(buildRegistroCard({
+            nombre: reg.NOMBRE || reg.nombre || '-',
+            turno: reg.TURNO || reg.turno || '-',
+            fecha: reg.FECHA || reg.fecha || '-',
+            hora: reg.HORA || reg.hora || '',
+            observaciones: reg.OBSERVACIONES || reg.observaciones || '-',
+            facturasPendientes: reg['FACTURAS FLETES PENDIENTES'] || reg.facturasPendientes || '-',
+            novedadesMateriales: reg['NOVEDADES MATERIALES'] || reg.novedadesMateriales || '-',
+            puntosConsiderar: reg['PUNTOS A CONSIDERAR'] || reg.puntosConsiderar || '-',
+            vehiculos: reg.vehiculos || [],
+            vehiculosStats: reg.vehiculosStats || {},
+          }));
+        });
+      }
+
+   function buildRegistroCard(reg) {
+  const card = document.createElement('div');
+  card.className = 'registro-card';
+  
+  // Calcular estadísticas de vehículos
+  const vehiculos = reg.vehiculos || [];
+  const stats = {
+    total: vehiculos.length,
+    confirmados: vehiculos.filter(v => (v.ESTADO || v.estado || '').toLowerCase() === 'confirmado').length,
+    pendientes: vehiculos.filter(v => (v.ESTADO || v.estado || '').toLowerCase() === 'pendiente').length,
+    cancelados: vehiculos.filter(v => (v.ESTADO || v.estado || '').toLowerCase() === 'cancelado').length
+  };
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'registro-header';
+  header.innerHTML = `
+    <div class="registro-header-content">
+      <h3 class="registro-title-main">${escapeHtml(reg.nombre || 'Sin nombre')}</h3>
+      <div class="registro-subtitle">Turno ${escapeHtml(reg.turno || '-').toUpperCase()}</div>
+    </div>
+    <div class="registro-meta">
+      <div class="registro-fecha">${escapeHtml(reg.fecha || '-')}</div>
+      <div class="registro-hora">${escapeHtml(reg.hora || '')}</div>
+    </div>
+  `;
+
+  // Body con campos organizados
+  const body = document.createElement('div');
+  body.className = 'registro-body';
+  body.innerHTML = `
+    <div class="registro-campo">
+      <b>📝 Observaciones</b>
+      <span>${escapeHtml(reg.observaciones || 'Sin observaciones registradas')}</span>
+    </div>
+    
+    <div class="registro-campo">
+      <b>📄 Facturas Pendientes</b>
+      <span>${escapeHtml(reg.facturasPendientes || 'No hay facturas pendientes')}</span>
+    </div>
+    
+    <div class="registro-campo">
+      <b>⚠️ Novedades Materiales</b>
+      <span>${escapeHtml(reg.novedadesMateriales || 'Sin novedades reportadas')}</span>
+    </div>
+    
+    <div class="registro-campo">
+      <b>🎯 Puntos a Considerar</b>
+      <span>${escapeHtml(reg.puntosConsiderar || 'No se especificaron puntos')}</span>
+    </div>
+  `;
+
+  // Sección de vehículos
+  const vehiculosSection = document.createElement('div');
+  vehiculosSection.className = 'vehiculos-section';
+  
+  const vehiculosHeader = document.createElement('div');
+  vehiculosHeader.className = 'vehiculos-header';
+  vehiculosHeader.innerHTML = `
+    <h4 class="vehiculos-title">🚚 Vehículos Programados</h4>
+    <div class="vehiculos-stats">
+      <div class="vehiculo-stat confirmados">
+        <span>✓</span> ${stats.confirmados}
+      </div>
+      <div class="vehiculo-stat pendientes">
+        <span>⏳</span> ${stats.pendientes}
+      </div>
+      <div class="vehiculo-stat cancelados">
+        <span>✗</span> ${stats.cancelados}
+      </div>
+    </div>
+  `;
+
+  const vehiculosContainer = document.createElement('div');
+  vehiculosContainer.className = 'vehiculos-container';
+  
+  if (vehiculos.length > 0) {
+    const tabla = document.createElement('table');
+    tabla.className = 'vehiculos-table-mini';
+    
+    tabla.innerHTML = `
+      <thead>
+        <tr>
+          <th>Destino</th>
+          <th>Transportadora</th>
+          <th>Placa</th>
+          <th>Hora Citada</th>
+          <th>Estado</th>
+          <th>Consecutivo</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${vehiculos.map(v => {
+          let estado = (v.ESTADO || v.estado || '').toLowerCase();
+          let estadoTexto = 'Pendiente';
+          let estadoClase = 'pendiente';
+          
+          if (estado === 'confirmado') {
+            estadoTexto = 'Confirmado';
+            estadoClase = 'confirmado';
+          } else if (estado === 'pendiente') {
+            estadoTexto = 'Pendiente';
+            estadoClase = 'pendiente';
+          } else if (estado === 'cancelado' || estado === 'rechazado') {
+            estadoTexto = 'Cancelado';
+            estadoClase = 'cancelado';
+          } else if (estado) {
+            estadoTexto = estado.charAt(0).toUpperCase() + estado.slice(1);
+            estadoClase = 'otro';
+          }
+          
+          return `
+            <tr>
+              <td><strong>${escapeHtml(v.DESTINO || v.destino || '-')}</strong></td>
+              <td>${escapeHtml(v.TRANSPORTADORA || v.transportadora || '-')}</td>
+              <td><code style="background: rgba(37, 99, 235, 0.1); padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 700;">${escapeHtml(v.PLACA || v.placa || '-')}</code></td>
+              <td>${escapeHtml(v['HORA CITADA'] || v.horaCitada || '-')}</td>
+              <td><span class="estado-badge estado-${estadoClase}">${estadoTexto}</span></td>
+              <td>${escapeHtml(v.CONSECUTIVO || v.consecutivo || '-')}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    `;
+    vehiculosContainer.appendChild(tabla);
+  } else {
+    vehiculosContainer.innerHTML = `
+      <div style="padding: 3rem 2rem; text-align: center; color: var(--muted-foreground);">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🚚</div>
+        <h4 style="margin-bottom: 0.5rem; color: var(--foreground);">No hay vehículos</h4>
+        <p>No se registraron vehículos para esta entrega</p>
+      </div>
+    `;
+  }
+
+  vehiculosSection.appendChild(vehiculosHeader);
+  vehiculosSection.appendChild(vehiculosContainer);
+
+  card.appendChild(header);
+  card.appendChild(body);
+  card.appendChild(vehiculosSection);
+  
+  return card;
+}
+
+function escapeHtml(unsafe) {
+  if (typeof unsafe !== 'string') return unsafe;
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+    .replace(/\n/g, "<br>");
+}
+
+      // --- Inicialización ---
+      function initNuevaSeccionRegistros() {
+        fetchRegistros()
+          .then(registros => {
+            renderRegistros(registros);
+          })
+          .catch(err => {
+            const cont = document.getElementById('registros-cards-container');
+            cont.innerHTML = '<div style="color:#c00;">Error cargando registros: ' + err + '</div>';
+          });
+      }
+
+      // Llama a la función al cargar la página (Apps Script ya inyecta el DOM listo)
+      window.addEventListener('DOMContentLoaded', initNuevaSeccionRegistros);
+      </script>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14,2 14,8 20,8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10,9 9,9 8,9"/>
+                        </svg>
+                    </div>
+                    <div class="header-info">
+                        <h1>Sistema de Entrega de Turno</h1>
+                        <p>Gestión logística empresarial</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="status-badge">
+                        <div class="status-dot"></div>
+                        Sistema Activo
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="navigation">
+        <div class="container">
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-view="form">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14,2 14,8 20,8"/>
+                    </svg>
+                    Nueva Entrega
+                </button>
+                <button class="nav-tab" data-view="registros">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3v5h5"/>
+                        <path d="M21 21v-5h-5"/>
+                        <path d="M3 8l18 0"/>
+                        <path d="M3 16l18 0"/>
+                    </svg>
+                    Registros
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Formulario de Entrega -->
+            <div id="form-view" class="view active">
+                <form id="entrega-form" class="form-container">
+                    <!-- Información Básica -->
+                    <div class="card animate-slide-up">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                Información Básica
+                            </h2>
+                            <p class="card-description">Complete los datos principales de la entrega de turno</p>
+                        </div>
+                        <div class="card-content">
+                            <div class="form-grid">
+                                <div class="form-group">
+                  <label for="facturador">Facturador</label>
+                  <select id="facturador" name="facturador" required onchange="document.getElementById('facturador-manual').style.display = (this.value === 'otro') ? 'block' : 'none';">
+                    <option value="">Seleccionar facturador</option>
+                    <option value="MARIA ALEJANDRA MONTES">MARIA ALEJANDRA MONTES</option>
+                    <option value="JONATHAN JAVIER GUERRERO">JONATHAN JAVIER GUERRERO</option>
+                    <option value="MERCEDES KATERINE JIMENEZ">MERCEDES KATERINE JIMENEZ</option>
+                    <option value="ERUS MARIA ORELLANOS">ERUS MARIA ORELLANOS</option>
+                    <option value="ELSIDA ESTEVEZ PERALES">ELSIDA ESTEVEZ PERALES</option>
+                    <option value="otro">Otro...</option>
+                  </select>
+                  <input type="text" id="facturador-manual" name="facturadorManual" placeholder="Escriba el nombre" style="display:none;margin-top:8px;width:100%;" />
+                                </div>
+                                <div class="form-group">
+                  <label for="turno">Turno</label>
+                  <select id="turno" name="turno" required>
+                    <option value="">Seleccionar turno</option>
+                    <option value="mañana">TURNO 1</option>
+                    <option value="tarde">TURNO 2</option>
+                    <option value="noche">TURNO 3</option>
+                  </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fecha">Fecha</label>
+                                    <input type="date" id="fecha" name="fecha" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="card animate-slide-up">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12,6 12,12 16,14"/>
+                                </svg>
+                                Observaciones del Turno
+                            </h2>
+                        </div>
+                        <div class="card-content">
+                            <div class="observaciones-text">
+                                <textarea id="observaciones" name="observaciones" placeholder="Describa las observaciones importantes del turno..." rows="4" required style="background:transparent;border:none;outline:none;width:100%;resize:vertical;color:inherit;font-size:inherit;font-family:inherit;line-height:inherit;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+          <!-- Vehículos Cargados Durante el Turno -->
+          <div class="card animate-slide-up">
+            <div class="card-header">
+              <h2 class="card-title">Vehículos Cargados Durante el Turno</h2>
+              <button type="button" id="add-vehiculo-cargado" class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Agregar Vehículo Cargado
+              </button>
+            </div>
+            <div class="card-content">
+              <div class="table-container">
+                <!-- En la sección de Vehículos Cargados Durante el Turno -->
+<table id="vehiculos-cargados-table" class="data-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Destino</th>
+            <th>Transportadora</th>
+            <th>Placa</th>
+            <th>Verificador</th>  <!-- Cambiado de "Quién cargó" -->
+            <th>Separador</th>    <!-- Cambiado de "Quién separó" -->
+            <th>Estatus</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody id="vehiculos-cargados-tbody">
+        <!-- Filas dinámicas -->
+    </tbody>
+</table>
+              </div>
+            </div>
+          </div>
+
+                    <!-- Proyección de Vehículos -->
+                    <div class="card animate-slide-up">
+                        <div class="card-header">
+                            <h2 class="card-title">Proyección de Vehículos Día Siguiente</h2>
+                            <button type="button" id="add-vehiculo" class="btn btn-secondary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Agregar Vehículo
+                            </button>
+                        </div>
+                        <div class="card-content">
+                            <div class="table-container">
+                                <table id="vehiculos-table" class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Destino</th>
+                                            <th>Transportadora</th>
+                                            <th>Placa</th>
+                                            <th>Hora Citada</th>
+                                            <th>Estado</th>
+                                            <th>Consecutivo</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vehiculos-tbody">
+                                        <!-- Filas dinámicas -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="vehiculos-summary" class="summary-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Total:</span>
+                                    <span class="stat-value" id="total-vehiculos">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Confirmados:</span>
+                                    <span class="stat-value" id="confirmados-vehiculos">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Pendientes:</span>
+                                    <span class="stat-value" id="pendientes-vehiculos">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Facturas y Novedades -->
+                    <div class="form-grid-2">
+                        <div class="card animate-slide-up">
+                            <div class="card-header">
+                                <h2 class="card-title">Facturas Fletes Pendientes</h2>
+                            </div>
+                            <div class="card-content">
+                                <div class="facturas-text">
+                                    <textarea id="facturas-pendientes" name="facturasPendientes" placeholder="Detalles de facturas pendientes..." rows="3" style="background:transparent;border:none;outline:none;width:100%;resize:vertical;color:inherit;font-size:inherit;font-family:inherit;line-height:inherit;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card animate-slide-up">
+                            <div class="card-header">
+                                <h2 class="card-title">Novedades de Materiales</h2>
+                            </div>
+                            <div class="card-content">
+                                <div class="novedades-text">
+                                    <textarea id="novedades-materiales" name="novedadesMateriales" placeholder="Novedades relacionadas con materiales..." rows="3" style="background:transparent;border:none;outline:none;width:100%;resize:vertical;color:inherit;font-size:inherit;font-family:inherit;line-height:inherit;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Puntos a Considerar -->
+                    <div class="card animate-slide-up">
+                        <div class="card-header">
+                            <h2 class="card-title">Puntos a Considerar</h2>
+                            <p class="card-description">Seleccione las actividades realizadas o pendientes</p>
+                        </div>
+                        <div class="card-content">
+                            <div id="puntos-considerar" class="checkbox-grid">
+                                <!-- Checkboxes dinámicos -->
+                            </div>
+                            <div id="puntos-summary" class="puntos-summary" style="display: none;">
+                                <p class="summary-text">Puntos seleccionados: <span id="puntos-count">0</span></p>
+                                <div id="puntos-badges" class="badges-container"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuración de Envío -->
+                    <div class="card animate-slide-up info-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                    <polyline points="22,6 12,13 2,6"/>
+                                </svg>
+                                Configuración de Envío
+                            </h2>
+                            <p class="card-description">Los datos se guardarán automáticamente en Google Sheets y se enviará un PDF a los correos configurados</p>
+                        </div>
+                        <div class="card-content">
+                            <div id="correos-list" class="badges-container">
+                                <!-- Correos dinámicos -->
+                            </div>
+                            <div class="info-box">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                <span>El PDF incluirá todos los datos del formulario, tabla de vehículos y puntos completados</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="card animate-scale-in">
+                        <div class="card-content">
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-outline">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                        <polyline points="17,21 17,13 7,13 7,21"/>
+                                        <polyline points="7,3 7,8 15,8"/>
+                                    </svg>
+                                    Guardar Borrador
+                                </button>
+                                <button type="submit" id="submit-btn" class="btn btn-primary">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="22" y1="2" x2="11" y2="13"/>
+                                        <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+                                    </svg>
+                                    Enviar Entrega de Turno
+                                </button>
+                            </div>
+                            <div id="progress-container" class="progress-container" style="display: none;">
+                                <div class="progress-info">
+                                    <span>Progreso del envío</span>
+                                    <span id="progress-step">1/2</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div id="progress-fill" class="progress-fill"></div>
+                                </div>
+                                <p id="progress-text" class="progress-text">Guardando datos en Google Sheets...</p>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+ <!-- NUEVA SECCIÓN DE REGISTROS MODERNA -->
+<div class="container" id="nueva-seccion-registros" style="display: none;">
+  <div class="registros-container">
+    <div class="registros-header">
+      <h1 class="registros-title">📊 Registros de Entregas</h1>
+      <p class="registros-subtitle">Gestión completa y organizada de todas las entregas de turno realizadas</p>
+    </div>
+    <div id="registros-cards-container" class="registros-grid">
+      <!-- Las tarjetas se generarán aquí dinámicamente -->
+    </div>
+  </div>
+</div>
+     
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>© 2025 Sistema de Entrega de Turno - Gestión Logística</p>
+                <div class="footer-right">
+                    <span>Versión 1.0</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        // Variables globales
+  let vehiculosData = []
+  let vehiculosCargadosData = []
+        const registrosData = []
+        let puntosConsiderarSeleccionados = []
+
+        // --- LISTAS DE DATOS ---
+const transportadoras = [
+    "TANQUES Y CAMIONES SAS",
+    "TRANSPORTADORA SURAMERICANA DE",
+    "TOPCARGA SAS", 
+    "CORDITRANS DE COLOMBIA SAS",
+    "TRANSPORTES ICEBERG DE COLOMBIA SA",
+    "OPL CARGA SAS",
+    "COMPAÑIA DE DISTRIBUCION Y",
+    "COLTANQUES SAS",
+    "TNC LOGISTICA TRANSCONTAINER S.A",
+    "ENTREGA DE CARGA SA",
+    "TRANSPORTES ARTICO SAS"
+]
+
+const placasVehiculos = [
+    "LGV075 SC", "WOK593 SC", "SQK305 SC", "SZL558 SC", "TVD075 SC", "JPP442 SC", "WOV042 SC", "SZY052 SC", 
+    "WEO761 SC", "TSW667 SC", "WGU908 SC", "WCT983 SC", "LZR896 SC", "UGA838 SC", "WGX052 SC", "TFO711 SC",
+    "ESP431 SC", "SQW352 SC", "WOP046 SC", "SZK208 SC", "BCE188 SC", "UFE514 SC", "LLI152 2C", "LUW737 3S3",
+    "WXJ031 SC", "SENCILLO WGV636", "JTZ527 3S3", "SZK193 SC", "LGU706 SC", "WGX049 SC", "TDS965 SC", "SSZ235 SC",
+    "SBL259 SC", "SWO418 SC", "SENCILLO SZL191", "SBL374 DT", "XKF289 DT", "TKG169 SC", "USE359 SC", "WPW937 DT",
+    "WGW936 SC", "TTZ318 SC", "UPN962 TM", "UPN729 3S3", "SWN579 3S3", "SMB100 3S3", "UPN750 TM", "UPN773 TM",
+    "SYK275 3S3", "GYY915 3S3", "SPV516 3S3", "GYY960 TM", "UPN746 3S3", "SWQ389 3S2", "TRF054 3S3", "UPN546 TM",
+    "TRACTOMULA TAV034", "XMC011 TM", "TRACTOMULA UPN763", "SPU193", "TRACTOMULA UPN848", "SWP315 TM", "WEM263 SC",
+    "UPN595 TM", "UPN800 TM", "TRACTOMULA SPU722", "SENCILLO JOU840", "SENCILLO SZV546", "TRACTOMULA STA432",
+    "SKK816 3S2", "UPN682 3S3", "UPN723 3S3", "SPM767 TM", "SPM367 3S3", "SWP484 3S3", "LUW738 3S2", "GYY946 3S3",
+    "GUU996 3S3", "GUU996 TM", "JOU937 3S2", "TDS392 3S3", "SYS014 3S3", "LUW745 3S2", "TDL489 3S3", "GUU995 3S3",
+    "TRACTOMULA skk816", "JOU920 3S2", "LQK012 3S2", "GUU990 3S2", "LJV323 3S2", "LUW715 3S2", "TRK362 3S3",
+    "SXV971 TM", "TM - SPM 366", "TDL494 3S2", "3S2 TDS367", "TGK027 TM", "TRACTOMULA TUL575", "TRACTOMULA KSK699",
+    "LQK004 2S3", "TRACTOMULA TGK025", "GUU986 3S2", "TRACTOMULA snp534", "STA432 3S3", "SZW947 3S3", "SZK598 3S3",
+    "SQB687 3S3", "XIE434 3S3", "SPW124 3S3", "TRACTOMULA SUD550", "SZW949 3S2", "TRM184 TM", "TRACTOMULA SSY734",
+    "NHP811 TM", "TRACTOMULA SQM125", "TRACTOMULA SXT226", "TRACTOMULA SXT226", "SXZ998 SC", "LGU824 SC",
+    "DOBLETROQUE SBL374", "LQK868 2S", "LQL012 TB", "LZR505 SC", "GHU391 SC", "SUK869 3S3"
+]
+
+const destinos = [
+    "OL CARTAGENA - REGIONAL", "REG CARTAGENA", "REG CARTAGENA - ATLANTIC", "REG CARTAGENA - JDH", 
+    "REG CARTAGENA - CTE", "REG MONTERIA - CTE CERETE", "REG MONTERIA", "REG MONTERIA - CTE LORICA",
+    "CTE SINCELEJO", "CTE CAUCASIA", "REG MONTERIA - CTE SINCELEJO", "CTE SANTA MARTA", "CTE RIOHACHA",
+    "SAN ANDRES", "OL. CARTAGENA", "D1 BARRANQUILLA", "CTE LORICA", "D1 VALLEDUPAR", "CTE MOMPOS",
+    "CTE MAICAO", "CTE URIBIA", "OP PROPIO - D1", "CTE VALLEDUPAR", "CTE CERETE", "URIBIA", 
+    "ATLANTIC CUCUTA", "CTE PIVIJAY", "REG VALLEDUPAR - CTE", "REG VALLEDUPAR - BOSCONIA", "CTE RIOHACHA",
+    "RECETA", "NOVAVENTA", "RECETA - NOVAVENTA", "RECETA - OP PROPIO", "RECETA - ATLANTIC",
+    "NOVAVENTA - OP PROPIO", "NOVAVENTA - ATLANTIC", "OP ROPIO - JDH", "DISTRIPOLLO", "MOSQUERA",
+    "CUCUTA - ATLANTIC", "CUCUTA", "AGUACHICA", "REG VALLEDUPAR", "OP PROPIO", "REG VALLEDUPAR - BARRANCAS",
+    "MAICAO - RIOHACHA", "SANTA MARTA - MAICAO", "SANTA MARTA - RIOHACHA", "SANTA MARTA - URIBIA", "CTE CAUCASIA"
+]
+
+// --- FUNCIONES DE BÚSQUEDA ---
+
+
+
+
+        // Puntos a considerar (lista completa)
+        const PUNTOS_CONSIDERAR = [
+            "Revisión y contabilización de facturas de fletes",
+            "Solicitud de Documentación para el despacho de los vehículos",
+            "Solicitud de vehículos a transportadoras",
+            "Seguimiento a la llegada de vehículos",
+            "Realizar notas créditos",
+            "Identificación de novedades y seguimiento a la solución presentadas en las facturas",
+            "Facturación de pedidos a clientes /Traslados centros Nutresa",
+            "Archivo de la documentación del mes, al finalizar el mismo",
+            "Despachos Exportaciones",
+            "Seguimiento a la llegada de facturas de fletes",
+            "Manejo del Aplicativo de despachos (Logística APP)",
+            "Seguimiento a la llegada de las facturas de clientes (Cumplidos)",
+            "Realizar Inventarios Cíclicos",
+            "Facturación venta a empleados",
+            "Cierre de pedidos bandeja Sap (VL10D - VL10C)",
+            "Coordinar operación de cargue cedi después de 4:00 pm",
+            "Diligenciar formato de control de sellos de seguridad nacionales",
+            "Entrega de sellos destruidos al coordinador cedi",
+            "Revisión de los extracostos en facturas de fletes",
+            "Revisión de las inspecciones de vehículos diarias",
+            "Realizar la facturación de los excedentes industriales - Chatarra",
+            "Generación de pedidos y facturación de salidas Varias",
+            "Garantizar que los operarios de almacén siempre cuenten con picking",
+            "Seguimiento a entregas en centros Nutresa y/o clientes directos"
+        ]
+
+        // Correos de notificación
+        const CORREOS_NOTIFICACION = ["soptransformaciondigital@pastascomarrico.com", "emorellanos@pastascomarrico.com", "eestevez@pastascomarrico.com", "mkjimenez@pastascomarrico.com", "jjguerrero@pastascomarrico.com", "practlogistica@pastascomarrico.com", "omorales@pastascomarrico.com"]
+
+    // Inicialización
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("Inicializando aplicación...")
+    // Configurar fecha actual
+    document.getElementById("fecha").value = new Date().toISOString().split("T")[0]
+    // Inicializar componentes
+    initNavigation()
+    initVehiculosCargadosTable()
+    initVehiculosTable()
+    initPuntosConsiderar()
+    initCorreosDisplay()
+    initFormSubmission()
+    initRegistrosView()
+    console.log("Aplicación inicializada correctamente")
+})
+
+    // Listas de nombres por rol
+    const verificadores = [
+      "ANUAR JOSE MONTERO CRESPO",
+      "ELITH CASTRO CARO",
+      "GIOVANNIS ENRIQUE CARRILLO MARIN",
+      "LAZARO MARIA BABILONIA OSORIO",
+      "GERWID JAVIER NARVAEZ MONCADA",
+      "NILSON MANUEL BUELVAS CARDENAS",
+      "STIVEN EDUARDO JIMENEZ BOLIVAR",
+      "WILLIAM ENRIQUE LOPEZ DE LA ROSA",
+      "ROBERTO ISAAC PAYARES MEZA",
+      "LUIS FERNANDO OLMOS LLINAS"
+    ];
+    const separadores = [
+      "ANUAR JOSE MONTERO CRESPO",
+      "ELITH CASTRO CARO",
+      "LAZARO MARIA BABILONIA OSORIO",
+      "GERWID JAVIER NARVAEZ MONCADA",
+      "NILSON MANUEL BUELVAS CARDENAS",
+      "STIVEN EDUARDO JIMENEZ BOLIVAR"
+    ];
+    function initVehiculosCargadosTable() {
+      const addBtn = document.getElementById("add-vehiculo-cargado")
+      addBtn.addEventListener("click", addVehiculoCargado)
+    }
+
+    function addVehiculoCargado() {
+      const id = Date.now() + Math.random().toString(36).substr(2, 5)
+      const vehiculo = {
+        id,
+        destino: '',
+        transportadora: '',
+        placa: '',
+        // Por defecto el primer nombre de cada lista
+        quienCargo: verificadores[0] || '',
+        quienPreparo: separadores[0] || '',
+        estatus: 'terminado'
+      }
+      vehiculosCargadosData.push(vehiculo)
+      renderVehiculosCargadosTable()
+    }
+
+    function removeVehiculoCargado(id) {
+      vehiculosCargadosData = vehiculosCargadosData.filter(v => v.id !== id)
+      renderVehiculosCargadosTable()
+    }
+
+    function updateVehiculoCargado(id, field, value) {
+      const vehiculo = vehiculosCargadosData.find(v => v.id === id)
+      if (vehiculo) {
+        vehiculo[field] = value
+      }
+    }
+
+function renderVehiculosCargadosTable() {
+    const tbody = document.getElementById("vehiculos-cargados-tbody")
+    tbody.innerHTML = ''
+    vehiculosCargadosData.forEach((vehiculo, index) => {
+        const row = document.createElement('tr')
+        
+      // Select de Verificador
+let verificadorOptions = verificadores.map(nombre =>
+    `<option value="${nombre}" ${vehiculo.quienCargo === nombre ? 'selected' : ''}>${nombre}</option>`
+).join('') + `<option value="otro">Otro...</option>`;
+
+// Select de Separador
+let separadorOptions = separadores.map(nombre =>
+    `<option value="${nombre}" ${vehiculo.quienPreparo === nombre ? 'selected' : ''}>${nombre}</option>`
+).join('') + `<option value="otro">Otro...</option>`;
+
+    // Select de Destino
+    let destinoOptions = destinos.map(destino => 
+      `<option value="${destino}" ${vehiculo.destino === destino ? 'selected' : ''}>${destino}</option>`
+    ).join('') + `<option value="otro">Otro...</option>`;
+    // Select de Transportadora
+    let transportadoraOptions = transportadoras.map(transportadora => 
+      `<option value="${transportadora}" ${vehiculo.transportadora === transportadora ? 'selected' : ''}>${transportadora}</option>`
+    ).join('') + `<option value="otro">Otro...</option>`;
+    // Select de Placa
+    let placaOptions = placasVehiculos.map(placa => 
+      `<option value="${placa}" ${vehiculo.placa === placa ? 'selected' : ''}>${placa}</option>`
+    ).join('') + `<option value="otro">Otro...</option>`;
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>
+        <select onchange="updateVehiculoCargado('${vehiculo.id}', 'destino', this.value); document.getElementById('destino-manual-cargado-${vehiculo.id}').style.display = (this.value === 'otro') ? 'block' : 'none';" style="width: 100%;">
+          <option value="">Seleccionar destino</option>
+          ${destinoOptions}
+        </select>
+        <input type="text" id="destino-manual-cargado-${vehiculo.id}" placeholder="Escriba destino" style="display:none;margin-top:5px;width:100%;" oninput="updateVehiculoCargado('${vehiculo.id}', 'destino', this.value)" value="${vehiculo.destino && !destinos.includes(vehiculo.destino) && vehiculo.destino !== 'otro' ? vehiculo.destino : ''}" />
+      </td>
+      <td>
+        <select onchange="updateVehiculoCargado('${vehiculo.id}', 'transportadora', this.value); document.getElementById('transportadora-manual-cargado-${vehiculo.id}').style.display = (this.value === 'otro') ? 'block' : 'none';" style="width: 100%;">
+          <option value="">Seleccionar transportadora</option>
+          ${transportadoraOptions}
+        </select>
+        <input type="text" id="transportadora-manual-cargado-${vehiculo.id}" placeholder="Escriba transportadora" style="display:none;margin-top:5px;width:100%;" oninput="updateVehiculoCargado('${vehiculo.id}', 'transportadora', this.value)" value="${vehiculo.transportadora && !transportadoras.includes(vehiculo.transportadora) && vehiculo.transportadora !== 'otro' ? vehiculo.transportadora : ''}" />
+      </td>
+      <td>
+        <select onchange="updateVehiculoCargado('${vehiculo.id}', 'placa', this.value); document.getElementById('placa-manual-cargado-${vehiculo.id}').style.display = (this.value === 'otro') ? 'block' : 'none';" style="width: 100%;">
+          <option value="">Seleccionar placa</option>
+          ${placaOptions}
+        </select>
+        <input type="text" id="placa-manual-cargado-${vehiculo.id}" placeholder="Escriba placa" style="display:none;margin-top:5px;width:100%;" oninput="updateVehiculoCargado('${vehiculo.id}', 'placa', this.value)" value="${vehiculo.placa && !placasVehiculos.includes(vehiculo.placa) && vehiculo.placa !== 'otro' ? vehiculo.placa : ''}" />
+      </td>
+           <td>
+    <select onchange="updateVehiculoCargado('${vehiculo.id}', 'quienCargo', this.value); document.getElementById('verificador-manual-cargado-${vehiculo.id}').style.display = (this.value === 'otro') ? 'block' : 'none';">
+        <option value="">Seleccionar verificador</option>
+        ${verificadorOptions}
+    </select>
+    <input type="text" id="verificador-manual-cargado-${vehiculo.id}" placeholder="Escriba verificador" style="display:none;margin-top:5px;width:100%;" oninput="updateVehiculoCargado('${vehiculo.id}', 'quienCargo', this.value)" value="${vehiculo.quienCargo && !verificadores.includes(vehiculo.quienCargo) && vehiculo.quienCargo !== 'otro' ? vehiculo.quienCargo : ''}" />
+</td>
+<td>
+    <select onchange="updateVehiculoCargado('${vehiculo.id}', 'quienPreparo', this.value); document.getElementById('separador-manual-cargado-${vehiculo.id}').style.display = (this.value === 'otro') ? 'block' : 'none';">
+        <option value="">Seleccionar separador</option>
+        ${separadorOptions}
+    </select>
+    <input type="text" id="separador-manual-cargado-${vehiculo.id}" placeholder="Escriba separador" style="display:none;margin-top:5px;width:100%;" oninput="updateVehiculoCargado('${vehiculo.id}', 'quienPreparo', this.value)" value="${vehiculo.quienPreparo && !separadores.includes(vehiculo.quienPreparo) && vehiculo.quienPreparo !== 'otro' ? vehiculo.quienPreparo : ''}" />
+</td>
+            <td>
+                <select onchange="updateVehiculoCargado('${vehiculo.id}', 'estatus', this.value)">
+                    <option value="terminado" ${vehiculo.estatus === 'terminado' ? 'selected' : ''}>Terminado</option>
+                    <option value="en proceso de carga" ${vehiculo.estatus === 'en proceso de carga' ? 'selected' : ''}>En proceso de carga</option>
+                    <option value="no completado" ${vehiculo.estatus === 'no completado' ? 'selected' : ''}>No completado</option>
+                </select>
+            </td>
+            <td><button type="button" class="btn btn-danger" onclick="removeVehiculoCargado('${vehiculo.id}')">Eliminar</button></td>
+        `
+        tbody.appendChild(row)
+    })
+}
+
+        // Navegación entre vistas
+function initNavigation() {
+    const navTabs = document.querySelectorAll(".nav-tab")
+    const views = document.querySelectorAll(".view")
+    
+    navTabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+            const targetView = tab.dataset.view
+            
+            // Actualizar tabs activos
+            navTabs.forEach(t => t.classList.remove("active"))
+            tab.classList.add("active")
+            
+            // Mostrar vista correspondiente
+            views.forEach(view => {
+                view.classList.remove("active")
+                if (view.id === `${targetView}-view`) {
+                    view.classList.add("active")
+                }
+            })
+            
+            // Cargar datos si es la vista de registros
+            if (targetView === "registros") {
+                console.log('🔄 Navegación a registros detectada');
+                // Pequeño delay para asegurar que la vista esté visible
+                setTimeout(() => {
+                    loadRegistros();
+                }, 100);
+            }
+        })
+    })
+}
+
+        // Tabla de vehículos
+        function initVehiculosTable() {
+            const addBtn = document.getElementById("add-vehiculo")
+            addBtn.addEventListener("click", addVehiculo)
+            
+            // Agregar primera fila por defecto
+            addVehiculo()
+        }
+
+        function addVehiculo() {
+            const id = Date.now().toString()
+            const vehiculo = {
+                id,
+                destino: "",
+                transportadora: "",
+                placa: "",
+                horaCitada: "",
+                estado: "pendiente",
+                consecutivo: ""
+            }
+            
+            vehiculosData.push(vehiculo)
+            renderVehiculosTable()
+            updateVehiculosStats()
+        }
+
+        function removeVehiculo(id) {
+            vehiculosData = vehiculosData.filter(v => v.id !== id)
+            renderVehiculosTable()
+            updateVehiculosStats()
+        }
+
+        function updateVehiculo(id, field, value) {
+            const vehiculo = vehiculosData.find(v => v.id === id)
+            if (vehiculo) {
+                vehiculo[field] = value
+                updateVehiculosStats()
+            }
+        }
+
+function renderVehiculosTable() {
+    const tbody = document.getElementById("vehiculos-tbody")
+    tbody.innerHTML = ""
+    
+    vehiculosData.forEach((vehiculo, index) => {
+    // Select de Destino
+    let destinoOptions = destinos.map(destino => 
+      `<option value="${destino}" ${vehiculo.destino === destino ? 'selected' : ''}>${destino}</option>`
+    ).join('') + `<option value="otro">Otro...</option>`;
+    // Select de Transportadora
+    let transportadoraOptions = transportadoras.map(transportadora => 
+      `<option value="${transportadora}" ${vehiculo.transportadora === transportadora ? 'selected' : ''}>${transportadora}</option>`
+    ).join('') + `<option value="otro">Otro...</option>`;
+    // Select de Placa
+    let placaOptions = placasVehiculos.map(placa => 
+      `<option value="${placa}" ${vehiculo.placa === placa ? 'selected' : ''}>${placa}</option>`
+    ).join('') + `<option value="otro">Otro...</option>`;
+    const row = document.createElement("tr")
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>
+        <select onchange="updateVehiculo('${vehiculo.id}', 'destino', this.value); document.getElementById('destino-manual-${vehiculo.id}').style.display = (this.value === 'otro') ? 'block' : 'none';" style="width: 100%;">
+          <option value="">Seleccionar destino</option>
+          ${destinoOptions}
+        </select>
+        <input type="text" id="destino-manual-${vehiculo.id}" placeholder="Escriba destino" style="display:none;margin-top:5px;width:100%;" oninput="updateVehiculo('${vehiculo.id}', 'destino', this.value)" value="${vehiculo.destino && !destinos.includes(vehiculo.destino) && vehiculo.destino !== 'otro' ? vehiculo.destino : ''}" />
+      </td>
+      <td>
+        <select onchange="updateVehiculo('${vehiculo.id}', 'transportadora', this.value); document.getElementById('transportadora-manual-${vehiculo.id}').style.display = (this.value === 'otro') ? 'block' : 'none';" style="width: 100%;">
+          <option value="">Seleccionar transportadora</option>
+          ${transportadoraOptions}
+        </select>
+        <input type="text" id="transportadora-manual-${vehiculo.id}" placeholder="Escriba transportadora" style="display:none;margin-top:5px;width:100%;" oninput="updateVehiculo('${vehiculo.id}', 'transportadora', this.value)" value="${vehiculo.transportadora && !transportadoras.includes(vehiculo.transportadora) && vehiculo.transportadora !== 'otro' ? vehiculo.transportadora : ''}" />
+      </td>
+      <td>
+        <select onchange="updateVehiculo('${vehiculo.id}', 'placa', this.value); document.getElementById('placa-manual-${vehiculo.id}').style.display = (this.value === 'otro') ? 'block' : 'none';" style="width: 100%;">
+          <option value="">Seleccionar placa</option>
+          ${placaOptions}
+        </select>
+        <input type="text" id="placa-manual-${vehiculo.id}" placeholder="Escriba placa" style="display:none;margin-top:5px;width:100%;" oninput="updateVehiculo('${vehiculo.id}', 'placa', this.value)" value="${vehiculo.placa && !placasVehiculos.includes(vehiculo.placa) && vehiculo.placa !== 'otro' ? vehiculo.placa : ''}" />
+      </td>
+            <td><input type="time" value="${vehiculo.horaCitada}" onchange="updateVehiculo('${vehiculo.id}', 'horaCitada', this.value)"></td>
+            <td>
+                <select onchange="updateVehiculo('${vehiculo.id}', 'estado', this.value)">
+                    <option value="pendiente" ${vehiculo.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                    <option value="confirmado" ${vehiculo.estado === "confirmado" ? "selected" : ""}>Confirmado</option>
+                    <option value="cancelado" ${vehiculo.estado === "cancelado" ? "selected" : ""}>Cancelado</option>
+                </select>
+            </td>
+            <td><input type="text" value="${vehiculo.consecutivo}" onchange="updateVehiculo('${vehiculo.id}', 'consecutivo', this.value)"></td>
+            <td>
+                <button type="button" class="btn btn-danger" onclick="removeVehiculo('${vehiculo.id}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3,6 5,6 21,6"/>
+                        <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"/>
+                    </svg>
+                </button>
+            </td>
+        `
+        tbody.appendChild(row)
+    })
+}
+
+        function updateVehiculosStats() {
+            const total = vehiculosData.length
+            const confirmados = vehiculosData.filter(v => v.estado === "confirmado").length
+            const pendientes = vehiculosData.filter(v => v.estado === "pendiente").length
+            
+            document.getElementById("total-vehiculos").textContent = total
+            document.getElementById("confirmados-vehiculos").textContent = confirmados
+            document.getElementById("pendientes-vehiculos").textContent = pendientes
+        }
+
+        // Puntos a considerar
+        function initPuntosConsiderar() {
+            const container = document.getElementById("puntos-considerar")
+            
+            PUNTOS_CONSIDERAR.forEach((punto, index) => {
+                const div = document.createElement("div")
+                div.className = "checkbox-item"
+                div.innerHTML = `
+                    <input type="checkbox" id="punto-${index}" onchange="togglePunto('${punto}', this.checked)">
+                    <label for="punto-${index}">${punto}</label>
+                `
+                container.appendChild(div)
+            })
+        }
+
+        function togglePunto(punto, checked) {
+            if (checked) {
+                puntosConsiderarSeleccionados.push(punto)
+            } else {
+                puntosConsiderarSeleccionados = puntosConsiderarSeleccionados.filter(p => p !== punto)
+            }
+            updatePuntosSummary()
+        }
+
+        function updatePuntosSummary() {
+            const summary = document.getElementById("puntos-summary")
+            const count = document.getElementById("puntos-count")
+            const badges = document.getElementById("puntos-badges")
+            
+            if (puntosConsiderarSeleccionados.length > 0) {
+                summary.style.display = "block"
+                count.textContent = puntosConsiderarSeleccionados.length
+                
+                badges.innerHTML = ""
+                puntosConsiderarSeleccionados.slice(0, 3).forEach(punto => {
+                    const badge = document.createElement("span")
+                    badge.className = "badge"
+                    badge.textContent = punto.substring(0, 30) + "..."
+                    badges.appendChild(badge)
+                })
+                
+                if (puntosConsiderarSeleccionados.length > 3) {
+                    const badge = document.createElement("span")
+                    badge.className = "badge badge-primary"
+                    badge.textContent = `+${puntosConsiderarSeleccionados.length - 3} más`
+                    badges.appendChild(badge)
+                }
+            } else {
+                summary.style.display = "none"
+            }
+        }
+
+        // Mostrar correos configurados
+        function initCorreosDisplay() {
+            const container = document.getElementById("correos-list")
+            
+            CORREOS_NOTIFICACION.forEach(email => {
+                const badge = document.createElement("span")
+                badge.className = "badge"
+                badge.innerHTML = `
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                    ${email}
+                `
+                container.appendChild(badge)
+            })
+        }
+
+        // Envío del formulario
+        function initFormSubmission() {
+            const form = document.getElementById("entrega-form")
+            form.addEventListener("submit", handleFormSubmit)
+        }
+
+async function handleFormSubmit(e) {
+  e.preventDefault()
+  
+  const submitBtn = document.getElementById("submit-btn")
+  const progressContainer = document.getElementById("progress-container")
+  const progressFill = document.getElementById("progress-fill")
+  const progressStep = document.getElementById("progress-step")
+  const progressText = document.getElementById("progress-text")
+  
+  // 🔥 CORRECCIÓN: Capturar el nombre correcto del facturador
+  let facturadorValue = document.getElementById("facturador").value;
+  
+  // Si seleccionó "otro", usar el valor del campo manual
+  if (facturadorValue === "otro") {
+    const facturadorManual = document.getElementById("facturador-manual").value;
+    if (facturadorManual && facturadorManual.trim() !== "") {
+      facturadorValue = facturadorManual.trim();
+    }
+  }
+  
+  // Recopilar datos del formulario
+  const formData = {
+    facturador: facturadorValue, // 🔥 Usar el valor corregido
+    turno: document.getElementById("turno").value,
+    fecha: document.getElementById("fecha").value,
+    observaciones: document.getElementById("observaciones").value,
+    vehiculos: vehiculosData,
+    vehiculosCargados: vehiculosCargadosData,
+    facturasPendientes: document.getElementById("facturas-pendientes").value,
+    novedadesMateriales: document.getElementById("novedades-materiales").value,
+    puntosConsiderar: puntosConsiderarSeleccionados
+  }
+  
+  console.log("📤 Enviando datos:", formData)
+  
+  // Resto del código permanece igual...
+  // Mostrar progreso
+  submitBtn.disabled = true
+  submitBtn.innerHTML = '<div class="spinner"></div> Guardando...'
+  progressContainer.style.display = "block"
+  progressFill.style.width = "50%"
+  progressStep.textContent = "1/2"
+  progressText.textContent = "Guardando datos en Google Sheets..."
+  
+  try {
+    // VERIFICAR QUE google.script.run ESTÉ DISPONIBLE
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      throw new Error('Google Apps Script no está disponible. Recarga la página.')
+    }
+    
+    google.script.run
+      .withSuccessHandler(function(result) {
+        console.log("✅ Respuesta del servidor:", result)
+        
+        if (result && result.success) {
+          showToast("✓ Datos guardados", "Los datos han sido guardados correctamente.", "success")
+          
+          // Actualizar progreso para PDF
+          progressStep.textContent = "2/2"
+          progressText.textContent = "Enviando PDF por correo..."
+          progressFill.style.width = "75%"
+          
+          if (result.pdfResult && result.pdfResult.success) {
+            progressFill.style.width = "100%"
+            progressText.textContent = "¡Proceso completado!"
+            showToast("✓ PDF enviado", `El reporte PDF ha sido enviado exitosamente a ${result.pdfResult.emailsSent} destinatarios.`, "success")
+          } else {
+            progressFill.style.width = "100%"
+            progressText.textContent = "Datos guardados, pero hubo un problema con el PDF"
+            
+            const errorMsg = result.pdfResult ? result.pdfResult.error : "Error al generar PDF"
+            showToast("⚠ Advertencia", `Datos guardados, pero no se pudo enviar el PDF: ${errorMsg}`, "warning")
+          }
+          
+          // Limpiar formulario después de 2 segundos
+          setTimeout(() => {
+            resetForm()
+            progressContainer.style.display = "none"
+            submitBtn.disabled = false
+            submitBtn.innerHTML = `
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+              </svg>
+              Enviar Entrega de Turno
+            `
+          }, 2000)
+        } else {
+          throw new Error(result ? result.error : "Error desconocido al guardar datos")
+        }
+      })
+      .withFailureHandler(function(error) {
+        console.error("❌ Error al enviar:", error)
+        showToast("✗ Error", `Hubo un problema al guardar los datos: ${error.message}`, "error")
+        
+        submitBtn.disabled = false
+        submitBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+          </svg>
+          Enviar Entrega de Turno
+        `
+        progressContainer.style.display = "none"
+      })
+      .guardarEntregaTurno(formData)
+      
+  } catch (error) {
+    console.error("❌ Error en el envío:", error)
+    showToast("✗ Error", `Error: ${error.message}`, "error")
+    
+    submitBtn.disabled = false
+    submitBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+      </svg>
+      Enviar Entrega de Turno
+    `
+    progressContainer.style.display = "none"
+  }
+}
+function resetForm() {
+    document.getElementById("entrega-form").reset()
+    document.getElementById("fecha").value = new Date().toISOString().split("T")[0]
+    
+    // 🔥 CORRECCIÓN: Ocultar y limpiar el campo manual del facturador
+    document.getElementById("facturador-manual").style.display = "none"
+    document.getElementById("facturador-manual").value = ""
+    
+    vehiculosData = []
+    vehiculosCargadosData = [] // 🔥 También limpiar vehículos cargados
+    puntosConsiderarSeleccionados = []
+    
+    // Limpiar checkboxes
+    document.querySelectorAll('#puntos-considerar input[type="checkbox"]').forEach(cb => {
+        cb.checked = false
+    })
+    
+    renderVehiculosTable()
+    renderVehiculosCargadosTable() // 🔥 También renderizar vehículos cargados
+    updateVehiculosStats()
+    updatePuntosSummary()
+    
+    // Agregar primera fila de vehículo
+    addVehiculo()
+}
+
+        // Vista de registros
+       function initRegistrosView() {
+    // Comentar estas líneas porque los elementos no existen
+    // const searchInput = document.getElementById("search-registros")
+    // const exportBtn = document.getElementById("export-registros")
+    
+    // if (searchInput && exportBtn) {
+    //     searchInput.addEventListener("input", filterRegistros)
+    //     exportBtn.addEventListener("click", exportRegistros)
+    // }
+}
+
+function loadRegistros() {
+    console.log('=== 🔄 CARGANDO REGISTROS - USANDO FUNCIONES CONOCIDAS ===');
+    
+    const tbody = document.getElementById("registros-tbody");
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" style="text-align: center; padding: 3rem; color: #666;">
+                <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+                <div style="font-size: 1.125rem; font-weight: 500;">Cargando registros...</div>
+                <div style="font-size: 0.875rem; margin-top: 0.5rem; color: #94a3b8;" id="status-text">Iniciando</div>
+            </td>
+        </tr>
+    `;
+    
+    // USAR SOLO getRegistros QUE SABEMOS QUE EXISTE (porque funciona en Apps Script)
+    console.log('🎯 Llamando a getRegistros...');
+    
+    google.script.run
+        .withSuccessHandler(function(respuesta) {
+            console.log('📨 RESPUESTA DE getRegistros:', respuesta);
+            
+            if (!respuesta) {
+                console.error('💥 Respuesta NULL de getRegistros');
+                mostrarError('El servidor respondió con NULL - Posible problema de serialización');
+                return;
+            }
+            
+            if (respuesta.success === false) {
+                console.error('❌ Error en getRegistros:', respuesta.error);
+                mostrarError('Error del servidor: ' + (respuesta.error || 'Desconocido'));
+                return;
+            }
+            
+            // ÉXITO
+            const registros = respuesta.data || [];
+            console.log('✅ getRegistros exitoso. Registros:', registros.length);
+            
+            if (registros.length === 0) {
+                mostrarSinRegistros();
+            } else {
+                // Intentar cargar vehículos, pero si falla, mostrar igual los registros
+                cargarVehiculosConFallback(registros);
+            }
+        })
+        .withFailureHandler(function(error) {
+            console.error('❌ FALLO getRegistros:', error);
+            mostrarError('Fallo la comunicación con getRegistros: ' + error.message);
+        })
+        .getRegistros(); // ← ESTA FUNCIÓN SÍ EXISTE
+}
+
+function cargarVehiculosConFallback(registros) {
+    console.log('🚗 Intentando cargar vehículos...');
+    
+    google.script.run
+        .withSuccessHandler(function(respuestaVehiculos) {
+            console.log('✅ Vehículos cargados:', respuestaVehiculos);
+            
+            let vehiculos = [];
+            if (respuestaVehiculos && respuestaVehiculos.success) {
+                vehiculos = respuestaVehiculos.data || [];
+            }
+            
+            // Combinar datos
+            const registrosCompletos = combinarDatos(registros, vehiculos);
+            renderRegistrosTable(registrosCompletos);
+            showToast('✅', `Cargados ${registrosCompletos.length} registros`, 'success');
+        })
+        .withFailureHandler(function(error) {
+            console.warn('⚠️ Error cargando vehículos, mostrando solo registros:', error);
+            // Mostrar registros sin vehículos
+            const registrosCompletos = registros.map(r => ({
+                id: r.HORA || Date.now().toString(),
+                facturador: r.NOMBRE || 'Sin nombre',
+                turno: (r.TURNO || '').toLowerCase(),
+                fecha: r.FECHA || '',
+                observaciones: r.OBSERVACIONES || '',
+                vehiculos: [],
+                puntosConsiderar: []
+            }));
+            renderRegistrosTable(registrosCompletos);
+            showToast('⚠️', 'Registros cargados sin información de vehículos', 'warning');
+        })
+        .getVehiculosRegistros(); // ← USAR getVehiculosRegistros EN LUGAR DE getVehiculosRegistros
+}
+
+function combinarDatos(registros, vehiculos) {
+    return registros.map(r => {
+        const id = r.HORA?.toString();
+        const vehiculosDelRegistro = vehiculos.filter(v => {
+            const vehiculoId = v.ID?.toString();
+            return vehiculoId === id;
+        }).map(v => ({
+            destino: v.DESTINO || '',
+            transportadora: v.TRANSPORTADORA || '',
+            placa: v.PLACA || '',
+            horaCitada: v['HORA CITADA'] || '',
+            estado: v.ESTADO || 'pendiente',
+            consecutivo: v.CONSECUTIVO || ''
+        }));
+        
+        return {
+            id: id || Date.now().toString(),
+            facturador: r.NOMBRE || 'Sin nombre',
+            turno: (r.TURNO || '').toLowerCase(),
+            fecha: r.FECHA || '',
+            observaciones: r.OBSERVACIONES || '',
+            vehiculos: vehiculosDelRegistro,
+            puntosConsiderar: []
+        };
+    });
+}
+
+function cargarRegistrosConRetry() {
+    console.log('📤 Solicitando registros...');
+    
+    google.script.run
+        .withSuccessHandler(function(respuesta) {
+            console.log('📨 Respuesta recibida:', respuesta);
+            
+            if (!respuesta) {
+                console.error('💥 Respuesta NULL');
+                mostrarError('El servidor respondió con NULL');
+                return;
+            }
+            
+            if (respuesta.success === false) {
+                console.error('❌ Error del servidor:', respuesta.error);
+                mostrarError('Error: ' + (respuesta.error || 'Desconocido'));
+                return;
+            }
+            
+            // ÉXITO - Procesar datos
+            const registros = respuesta.data || [];
+            console.log('✅ Registros cargados:', registros.length);
+            
+            if (registros.length === 0) {
+                mostrarSinRegistros();
+            } else {
+                cargarVehiculos(registros);
+            }
+        })
+        .withFailureHandler(function(error) {
+            console.error('❌ Error cargando registros:', error);
+            mostrarError('Error de comunicación: ' + error.message);
+        })
+        .getRegistros();
+}
+
+function cargarRegistrosDirecto() {
+    console.log('🔄 Método directo - cargando registros...');
+    
+    // Intentar cargar directamente sin diagnóstico
+    google.script.run
+        .withSuccessHandler(function(respuesta) {
+            console.log('✅ Método directo funcionó:', respuesta);
+            
+            if (respuesta && respuesta.success) {
+                const registros = respuesta.data || [];
+                renderRegistrosTable(registros);
+                showToast('✅', `Cargados ${registros.length} registros`, 'success');
+            } else {
+                mostrarError('El servidor no respondió correctamente');
+            }
+        })
+        .withFailureHandler(function(error) {
+            console.error('❌ Método directo falló:', error);
+            mostrarError('Todos los métodos fallaron: ' + error.message);
+        })
+        .getRegistros();
+}
+
+function cargarVehiculos(registros) {
+    console.log('🚗 Cargando vehículos para', registros.length, 'registros');
+    
+    google.script.run
+        .withSuccessHandler(function(respuesta) {
+            console.log('📦 RESPUESTA VEHÍCULOS:', respuesta);
+            
+            let vehiculos = [];
+            if (respuesta && respuesta.success) {
+                vehiculos = respuesta.data || [];
+            }
+            
+            console.log('✅ Vehículos cargados:', vehiculos.length);
+            
+            // Combinar datos CORRECTAMENTE
+            const registrosCompletos = registros.map(r => {
+                const id = r.HORA?.toString(); // Usar HORA como ID
+                const vehiculosDelRegistro = vehiculos.filter(v => {
+                    const vehiculoId = v.ID?.toString();
+                    return vehiculoId === id;
+                }).map(v => ({
+                    destino: v.DESTINO || '',
+                    transportadora: v.TRANSPORTADORA || '',
+                    placa: v.PLACA || '',
+                    horaCitada: v['HORA CITADA'] || '',
+                    estado: v.ESTADO || 'pendiente',
+                    consecutivo: v.CONSECUTIVO || ''
+                }));
+                
+                return {
+                    id: id || Date.now().toString(),
+                    facturador: r.NOMBRE || 'Sin nombre',
+                    turno: (r.TURNO || '').toLowerCase(),
+                    fecha: r.FECHA || '',
+                    observaciones: r.OBSERVACIONES || '',
+                    vehiculos: vehiculosDelRegistro,
+                    puntosConsiderar: []
+                };
+            });
+            
+            console.log('🎯 Mostrando', registrosCompletos.length, 'registros combinados');
+            renderRegistrosTable(registrosCompletos);
+            showToast('✅', `Cargados ${registrosCompletos.length} registros`, 'success');
+            
+        })
+        .withFailureHandler(function(error) {
+            console.warn('⚠️ Error vehículos, mostrando sin ellos:', error);
+            // Mostrar registros sin vehículos
+            const registrosCompletos = registros.map(r => ({
+                id: r.HORA?.toString() || Date.now().toString(),
+                facturador: r.NOMBRE || 'Sin nombre',
+                turno: (r.TURNO || '').toLowerCase(),
+                fecha: r.FECHA || '',
+                observaciones: r.OBSERVACIONES || '',
+                vehiculos: [],
+                puntosConsiderar: []
+            }));
+            renderRegistrosTable(registrosCompletos);
+            showToast('⚠️', 'Registros cargados sin información de vehículos', 'warning');
+        })
+        .getVehiculosRegistros();
+}
+
+function mostrarError(mensaje) {
+    const tbody = document.getElementById("registros-tbody");
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" style="text-align: center; padding: 2rem; color: red;">
+                ❌ ${mensaje}
+                <br><button onclick="loadRegistros()" style="margin-top: 1rem; padding: 0.5rem 1rem;">Reintentar</button>
+            </td>
+        </tr>
+    `;
+}
+
+function mostrarSinRegistros() {
+    const tbody = document.getElementById("registros-tbody");
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" style="text-align: center; padding: 2rem; color: #666;">
+                📭 No hay registros
+            </td>
+        </tr>
+    `;
+}
+        function renderRegistrosTable(data) {
+      const tbody = document.getElementById("registros-tbody")
+      tbody.innerHTML = ""
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--muted-foreground);">No hay registros disponibles</td></tr>'
+        return
+      }
+      data.forEach(registro => {
+        const row = document.createElement("tr")
+        // Usar los campos normalizados del backend
+        const fecha = registro.FECHA || registro.fecha || '';
+        const facturador = registro.NOMBRE || registro.facturador || '';
+        const turno = (registro.TURNO || registro.turno || '').toUpperCase();
+        const vehiculos = registro.vehiculos || [];
+        const stats = registro.vehiculosStats || { total: 0, confirmados: 0, pendientes: 0, cancelados: 0 };
+        const estadoBadge = getEstadoBadge(stats);
+        row.innerHTML = `
+          <td>${fecha}</td>
+          <td>${facturador}</td>
+          <td><span class="badge">${turno}</span></td>
+          <td>${stats.total} vehículos<br>
+            <span style="font-size:0.8em;">
+              <span class="badge badge-success">${stats.confirmados} confirmados</span> 
+              <span class="badge badge-warning">${stats.pendientes} pendientes</span> 
+              <span class="badge badge-error">${stats.cancelados} cancelados</span>
+            </span>
+          </td>
+          <td>${estadoBadge}</td>
+          <td>
+            <button class="btn btn-secondary" onclick="viewRegistro('${registro.id || registro.HORA || ''}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+              Ver Detalles
+            </button>
+          </td>
+        `
+        tbody.appendChild(row)
+      })
+    }
+
+    function getEstadoBadge(stats) {
+      if (!stats) return '<span class="badge">Sin datos</span>';
+      if (stats.total === 0) {
+        return '<span class="badge">Sin vehículos</span>';
+      } else if (stats.confirmados === stats.total) {
+        return '<span class="badge badge-success">Completo</span>';
+      } else if (stats.pendientes > 0 || stats.cancelados > 0) {
+        return '<span class="badge badge-warning">Pendiente</span>';
+      } else if (stats.confirmados > 0) {
+        return '<span class="badge badge-warning">Parcial</span>';
+      } else {
+        return '<span class="badge">Pendiente</span>';
+      }
+    }
+
+        function filterRegistros() {
+            const searchTerm = document.getElementById("search-registros").value.toLowerCase()
+            const filteredData = registrosData.filter(registro => 
+                registro.facturador.toLowerCase().includes(searchTerm)
+            )
+            renderRegistrosTable(filteredData)
+        }
+
+        function exportRegistros() {
+            showToast("Exportando", "Generando archivo de exportación...", "success")
+        }
+
+        function viewRegistro(id) {
+            const registro = registrosData.find(r => r.id === id)
+            if (registro) {
+                alert(`Detalles del registro:\n\nFacturador: ${registro.facturador}\nTurno: ${registro.turno}\nFecha: ${registro.fecha}\nVehículos: ${registro.vehiculos.length}\nPuntos completados: ${registro.puntosConsiderar.length}`)
+            }
+        }
+
+        // Sistema de notificaciones (Toast)
+        function showToast(title, description, type = "success") {
+            const container = document.getElementById("toast-container")
+            const toast = document.createElement("div")
+            toast.className = `toast ${type}`
+            
+            let icon = ""
+            if (type === "success") {
+                icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>'
+            } else if (type === "error") {
+                icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+            } else if (type === "warning") {
+                icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+            }
+            
+            toast.innerHTML = `
+                <div style="display: flex; gap: 0.75rem; align-items: start;">
+                    <div style="flex-shrink: 0;">${icon}</div>
+                    <div style="flex: 1;">
+                        <div class="toast-title">${title}</div>
+                        <div class="toast-description">${description}</div>
+                    </div>
+                </div>
+            `
+            
+            container.appendChild(toast)
+            
+            // Animación de entrada
+            setTimeout(() => {
+                toast.style.opacity = "1"
+                toast.style.transform = "translateX(0)"
+            }, 10)
+            
+            // Auto-remove después de 6 segundos
+            setTimeout(() => {
+                toast.style.opacity = "0"
+                toast.style.transform = "translateX(100%)"
+                setTimeout(() => toast.remove(), 300)
+            }, 6000)
+        }
+
+        // Función para probar conexión manualmente
+function probarConexion() {
+    console.log('🔧 Probando conexión manual...');
+    google.script.run
+        .withSuccessHandler(function(result) {
+            console.log('✅ Conexión exitosa:', result);
+            alert('✅ Conexión exitosa:\n' + JSON.stringify(result, null, 2));
+        })
+        .withFailureHandler(function(error) {
+            console.error('❌ Error de conexión:', error);
+            alert('❌ Error de conexión:\n' + error);
+        })
+        .testConnection();
+}
+
+// Función para diagnóstico manual
+function ejecutarDiagnostico() {
+    console.log('🔍 Ejecutando diagnóstico manual...');
+    google.script.run
+        .withSuccessHandler(function(result) {
+            console.log('📊 Diagnóstico:', result);
+            alert('📊 Diagnóstico:\n' + JSON.stringify(result, null, 2));
+        })
+        .withFailureHandler(function(error) {
+            console.error('❌ Error diagnóstico:', error);
+            alert('❌ Error diagnóstico:\n' + error);
+        })
+        .diagnosticarProblema();
+}
+
+/**
+ * PRUEBA DE COMUNICACIÓN FRONTEND
+ */
+/**
+ * DIAGNÓSTICO COMPLETO DEL FRONTEND
+ */
+function diagnosticoFrontend() {
+  try {
+    console.log('🩺 DIAGNÓSTICO FRONTEND SOLICITADO');
+    
+    // Verificar acceso básico
+    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = spreadsheet.getSheetByName("Entregas_Turno");
+    
+    // Datos de prueba simples
+    const datosPrueba = [
+      { id: "1", nombre: "Prueba 1", fecha: "2024-10-02" },
+      { id: "2", nombre: "Prueba 2", fecha: "2024-10-02" }
+    ];
+    
+    const respuesta = {
+      success: true,
+      message: "✅ Diagnóstico frontend exitoso",
+      timestamp: new Date().toISOString(),
+      spreadsheet: spreadsheet.getName(),
+      hojaExiste: !!sheet,
+      datos: datosPrueba,
+      funcionesDisponibles: [
+        "diagnosticoFrontend", 
+        "getRegistros", 
+        "getRegistrosFrontend",
+        "testConnection"
+      ]
+    };
+    
+    console.log('📤 Enviando diagnóstico:', respuesta);
+    
+    // Retornar como texto JSON explícito
+    return JSON.stringify(respuesta);
+    
+  } catch (error) {
+    console.error('❌ Error en diagnóstico:', error);
+    return JSON.stringify({
+      success: false,
+      error: error.toString(),
+      message: "Error en diagnóstico"
+    });
+  }
+}
+
+function initNavigation() {
+  const navTabs = document.querySelectorAll(".nav-tab");
+  const views = document.querySelectorAll(".view");
+  const nuevaSeccionRegistros = document.getElementById("nueva-seccion-registros");
+  
+  navTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      const targetView = tab.dataset.view;
+      
+      // Actualizar tabs activos
+      navTabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      
+      // Mostrar/ocultar vistas
+      views.forEach(view => {
+        view.classList.remove("active");
+        if (view.id === `${targetView}-view`) {
+          view.classList.add("active");
+        }
+      });
+      
+      // Manejar la sección de registros (tarjetas)
+      if (targetView === "registros") {
+        if (nuevaSeccionRegistros) {
+          nuevaSeccionRegistros.style.display = 'block';
+          console.log('🔄 Cargando registros en tarjetas...');
+          setTimeout(() => {
+            initNuevaSeccionRegistros();
+          }, 300);
+        }
+      } else {
+        if (nuevaSeccionRegistros) {
+          nuevaSeccionRegistros.style.display = 'none';
+        }
+      }
+    });
+  });
+  
+  // Ocultar sección de registros al inicio
+  if (nuevaSeccionRegistros) {
+    nuevaSeccionRegistros.style.display = 'none';
+  }
+}
+
+
+        // Funciones globales para eventos inline
+        window.updateVehiculo = updateVehiculo
+        window.removeVehiculo = removeVehiculo
+        window.togglePunto = togglePunto
+        window.viewRegistro = viewRegistro
+    </script>
+
+    <!-- Datalists para búsqueda en tiempo real -->
+<datalist id="lista-destinos-cargados"></datalist>
+<datalist id="lista-transportadoras-cargadas"></datalist>
+<datalist id="lista-placas-cargadas"></datalist>
+<datalist id="lista-destinos-proyeccion"></datalist>
+<datalist id="lista-transportadoras-proyeccion"></datalist>
+<datalist id="lista-placas-proyeccion"></datalist>
+<!-- Datalists para las listas desplegables -->
+<datalist id="lista-destinos"></datalist>
+<datalist id="lista-transportadoras"></datalist>
+<datalist id="lista-placas"></datalist>
+</body>
+
+
+
+</html>
